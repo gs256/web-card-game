@@ -74,23 +74,27 @@
     height: var(--card-height);
     width: var(--card-width);
     background-color: crimson;
+    transition: 0.3s;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
 }
 
-.game-card:hover {
+.game-card.interactable.zoomed-in {
+    transform: scale(1.3);
+    margin: 0 3rem;
+}
+
+.game-card.interactable:hover {
     box-shadow: 0px 0px 0px 4px rgba(255, 255, 255, 0.5) inset;
 }
 
-.game-card.selected {
+.game-card.interactable.selected {
     box-shadow: 0px 0px 0px 4px rgba(255, 0, 0, 0.4) inset;
-}
-
-.game-card.dragging {
-    position: absolute;
 }
 
 .table-player-card-collection-container {
     position: absolute;
-    perspective: 80rem;
     width: 100%;
     height: 20rem;
     left: 0;
@@ -102,11 +106,7 @@
 }
 
 .table-player-card-collection-container:hover {
-    bottom: 0;
-}
-
-.table-player-card-collection-container:hover > .table-player-card-collection {
-    transform: rotate3d(1, 0, 0, 45deg)
+    bottom: 5rem;
 }
 
 .table-player-card-collection {
