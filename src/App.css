@@ -1,38 +1,115 @@
-.App {
-  text-align: center;
+.app {
+    --card-width: 12.5rem;
+    --card-height: 17.5rem;
 }
 
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
+.game {
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
+.game-table {
+    overflow-y: hidden;
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
+.table-card-area {
+    width: 90rem;
+    height: 40rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
 }
 
-.App-link {
-  color: #61dafb;
+.table-card-row {
+    height: var(--card-height);
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    column-gap: 6rem;
 }
 
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+.table-card-placeholder {
+    height: var(--card-height);
+    width: var(--card-width);
+    background-color: lightskyblue;
+    align-self: center;
+    justify-self: center;
+}
+
+.table-card-placeholder.highlighted {
+    box-shadow: 0px 0px 0px 4px rgba(255, 234, 42, 0.7) inset;
+}
+
+.table-card-deck {
+    height: var(--card-height);
+    width: var(--card-width);
+    position: absolute;
+    bottom: 4rem;
+    right: 4rem;
+    display: flex;
+}
+
+.card-deck-card-container {
+    width: 100%;
+    height: 100%;
+    background-color: blue;
+    display: grid;
+}
+
+.card-deck-card-container > * {
+    grid-row: 1;
+    grid-column: 1;
+}
+
+.game-card {
+    border-radius: 1rem;
+    height: var(--card-height);
+    width: var(--card-width);
+    background-color: crimson;
+}
+
+.game-card:hover {
+    box-shadow: 0px 0px 0px 4px rgba(255, 255, 255, 0.5) inset;
+}
+
+.game-card.selected {
+    box-shadow: 0px 0px 0px 4px rgba(255, 0, 0, 0.4) inset;
+}
+
+.game-card.dragging {
+    position: absolute;
+}
+
+.table-player-card-collection-container {
+    position: absolute;
+    perspective: 80rem;
+    width: 100%;
+    height: 20rem;
+    left: 0;
+    bottom: -10rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: 0.3s; 
+}
+
+.table-player-card-collection-container:hover {
+    bottom: 0;
+}
+
+.table-player-card-collection-container:hover > .table-player-card-collection {
+    transform: rotate3d(1, 0, 0, 45deg)
+}
+
+.table-player-card-collection {
+    transition: 0.3s; 
+    display: flex;
 }
