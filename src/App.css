@@ -91,6 +91,7 @@
 
 .game-card.interactable.selected {
     box-shadow: 0px 0px 0px 4px rgba(255, 0, 0, 0.4) inset;
+    bottom: 2rem;
 }
 
 .table-player-card-collection-container {
@@ -102,7 +103,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: 0.3s; 
+    transition: 0.3s;
 }
 
 .table-player-card-collection-container:hover {
@@ -110,6 +111,6 @@
 }
 
 .table-player-card-collection {
-    transition: 0.3s; 
+    transition: 0.3s;
     display: flex;
 }

@@ -1,4 +1,11 @@
-import { Dispatch, ReactNode, SetStateAction, useEffect, useState } from 'react'
+import {
+    Dispatch,
+    MouseEventHandler,
+    ReactNode,
+    SetStateAction,
+    useEffect,
+    useState,
+} from 'react'
 
 const cardImageUrl = 'https://via.placeholder.com/125x175'
 const cardRowWidth = 5
@@ -45,16 +52,19 @@ function Table() {
         new CardModel('card 2'),
         new CardModel('card 3'),
         new CardModel('card 4'),
-        new CardModel('card 5')
+        new CardModel('card 5'),
     ] as CardModel[])
 
     useEffect(() => {
-        setInPlacingMode(playerCardCollection.findIndex((card) => card.selected) >= 0)
+        setInPlacingMode(
+            playerCardCollection.findIndex((card) => card.selected) >= 0
+        )
     }, [playerCardCollection])
 
     function getEmptyCardRow(): CardPlaceholderModel[] {
         const result: CardPlaceholderModel[] = []
-        for (let i = 0; i < cardRowWidth; i++) result.push(new CardPlaceholderModel())
+        for (let i = 0; i < cardRowWidth; i++)
+            result.push(new CardPlaceholderModel())
         return result
     }
 
@@ -68,17 +78,50 @@ function Table() {
         )
     }
 
+    function removeSelectedCard() {
+        setPlayerCardCollection(
+            playerCardCollection.filter((card, index) => !card.selected)
+        )
+    }
+
+    function onCardRowPlaceholderClicked(plaseholderIndex: number) {
+        console.log('clicked on', plaseholderIndex)
+        setPlayerCardRow(
+            playerCardRow.map((placeholder, index) => {
+                if (plaseholderIndex == index) {
+                    placeholder.card = new CardModel('placed card')
+                    return placeholder
+                }
+                return placeholder
+            })
+        )
+        setInPlacingMode(false)
+        removeSelectedCard()
+    }
+
     return (
         <div className='game-table'>
             <div className='table-card-area'>
-                <CardRow cardRow={enemyCardRow} ownedByPlayer={false} inPlaceMode={inPlacingMode} />
-                <CardRow cardRow={playerCardRow} ownedByPlayer={true} inPlaceMode={inPlacingMode} />
+                <CardRow
+                    cardRow={enemyCardRow}
+                    ownedByPlayer={false}
+                    inPlaceMode={inPlacingMode}
+                    onCardPlaceholderClick={() => {}}
+                />
+                <CardRow
+                    cardRow={playerCardRow}
+                    ownedByPlayer={true}
+                    inPlaceMode={inPlacingMode}
+                    onCardPlaceholderClick={onCardRowPlaceholderClicked}
+                />
             </div>
             <PlayerCardCollection>
                 {playerCardCollection.map((card, index) => (
                     <Card
                         selected={card.selected}
-                        changeSelection={(selected) => changeSelection(selected, index)}
+                        changeSelection={(selected) =>
+                            changeSelection(selected, index)
+                        }
                         key={index}
                         interactable={true}
                         tempText={card.tempText}
@@ -126,19 +169,44 @@ function CardRow(props: {
     cardRow: CardPlaceholderModel[]
     ownedByPlayer: boolean
     inPlaceMode: boolean
+    onCardPlaceholderClick: (index: number) => void
 }) {
     return (
         <div className='table-card-row'>
             {props.cardRow.map((placeholder, index) => (
-                <CardPlaceholder highlighted={props.ownedByPlayer && props.inPlaceMode} />
+                <CardPlaceholder
+                    model={placeholder}
+                    highlighted={props.ownedByPlayer && props.inPlaceMode}
+                    onClick={() => props.onCardPlaceholderClick(index)}
+                />
             ))}
         </div>
     )
 }
 
-function CardPlaceholder(props: { highlighted: boolean }) {
+function CardPlaceholder(props: {
+    model: CardPlaceholderModel
+    highlighted: boolean
+    onClick: () => void
+}) {
+    const card = props.model.card
+
     return (
-        <div className={`table-card-placeholder${props.highlighted ? ' highlighted' : ''}`}></div>
+        <div
+            className={`table-card-placeholder${
+                props.highlighted ? ' highlighted' : ''
+            }`}
+            onClick={props.onClick}
+        >
+            {card && (
+                <Card
+                    tempText={card.tempText}
+                    imageUrl={cardImageUrl}
+                    interactable={false}
+                    selected={false}
+                />
+            )}
+        </div>
     )
 }
 
@@ -181,7 +249,7 @@ function Card(props: {
             onMouseEnter={onMouseEnter}
             onMouseLeave={onMouseLeave}
             style={{
-                backgroundImage: `url("${props.imageUrl}")`
+                backgroundImage: `url("${props.imageUrl}")`,
             }}
         >
             {props.tempText}
@@ -194,7 +262,7 @@ function DummyCard(props: { imageUrl: string }) {
         <div
             className='game-card'
             style={{
-                backgroundImage: `url("${props.imageUrl}")`
+                backgroundImage: `url("${props.imageUrl}")`,
             }}
         ></div>
     )
@@ -205,7 +273,10 @@ function PlayerCardCollection(props: { children?: ReactNode[] }) {
         <div className={'table-player-card-collection-container'}>
             <div className='table-player-card-collection'>
                 {props.children?.map((child, index) => (
-                    <div key={index} style={{ marginRight: '10px', marginLeft: '10px' }}>
+                    <div
+                        key={index}
+                        style={{ marginRight: '10px', marginLeft: '10px' }}
+                    >
                         {child}
                     </div>
                 ))}
