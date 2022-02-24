@@ -108,7 +108,9 @@ function Table(props: { facade: GameFacade }) {
                     />
                 ))}
             </PlayerCardCollection>
-            <CardDeck>{/* TODO: Add dummy cards */}</CardDeck>
+            <CardDeck>
+                <CardView card={new CardModel(GameFacade.dummyCard)} interactable={false} />
+            </CardDeck>
         </div>
     )
 }

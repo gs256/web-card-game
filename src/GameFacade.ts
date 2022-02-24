@@ -37,6 +37,7 @@ const deck = [
 export default class GameFacade {
     public static readonly deck = deck
     public static readonly cardRowWidth = 5
+    public static readonly dummyCard = new Card(10000000)
 
     private readonly _playerSlots: CardSlot[]
     private readonly _enemySlots: CardSlot[]
