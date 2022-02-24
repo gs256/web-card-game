@@ -78,6 +78,8 @@
     display: flex;
     align-items: flex-start;
     justify-content: center;
+    cursor: pointer;
+    user-select: none;
 }
 
 .game-card.interactable.zoomed-in {

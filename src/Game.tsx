@@ -1,211 +1,146 @@
-import {
-    Dispatch,
-    MouseEventHandler,
-    ReactNode,
-    SetStateAction,
-    useEffect,
-    useState,
-} from 'react'
-
-const cardImageUrl = 'https://via.placeholder.com/125x175'
-const cardRowWidth = 5
+import { ReactNode, useEffect, useState } from 'react'
+import Card from './Card'
+import CardSlot from './CardSlot'
+import GameFacade from './GameFacade'
 
 export default function Game() {
+    const facade = new GameFacade()
+
     return (
         <div className='game'>
-            <Table />
+            <Table facade={facade} />
         </div>
     )
 }
 
-class CardPlaceholderModel {
-    private _card: CardModel | null = null
-
-    public get card(): CardModel | null {
-        return this._card
-    }
-
-    public set card(value: CardModel | null) {
-        this._card = value
-    }
-
-    public empty(): boolean {
-        return this._card == null
-    }
-}
-
 class CardModel {
-    public selected: boolean = false
-    public tempText: string = ''
+    public readonly id: number
+    public readonly imageUrl: string
+    public selected: boolean
+    public hidden: boolean
 
-    constructor(tempText: string) {
-        this.tempText = tempText
+    constructor(card: Card) {
+        this.id = card.id
+        this.imageUrl = card.imageUrl
+        this.selected = false
+        this.hidden = false
     }
 }
 
-function Table() {
+class SlotModel {
+    public card: CardModel | null = null
+    public highlighted: boolean
+
+    constructor(slot: CardSlot) {
+        if (slot.card) this.card = new CardModel(slot.card)
+        this.highlighted = false
+    }
+}
+
+function Table(props: { facade: GameFacade }) {
+    const facade = props.facade
+
     const [inPlacingMode, setInPlacingMode] = useState(false)
-    const [playerCardRow, setPlayerCardRow] = useState(getEmptyCardRow)
-    const [enemyCardRow, setEnemyCardRow] = useState(getEmptyCardRow())
-    const [playerCardCollection, setPlayerCardCollection] = useState([
-        new CardModel('card 1'),
-        new CardModel('card 2'),
-        new CardModel('card 3'),
-        new CardModel('card 4'),
-        new CardModel('card 5'),
-    ] as CardModel[])
+    const [playerSlots, setPlayerSlots] = useState(
+        facade.playerSlots.map((slot) => new SlotModel(slot))
+    )
+    const [enemySlots, setEnemySlots] = useState(
+        facade.enemySlots.map((slot) => new SlotModel(slot))
+    )
+    const [playerCollection, setPlayerCollection] = useState(
+        facade.playerCollection.map((card) => new CardModel(card))
+    )
+    const [selectedCard, setSelectedCard] = useState<CardModel | null>(null)
+
+    facade.onPlayerMoveMade = () => {
+        setPlayerSlots(facade.playerSlots.map((slot) => new SlotModel(slot)))
+        setPlayerCollection(facade.playerCollection.map((card) => new CardModel(card)))
+        setSelectedCard(null)
+    }
+
+    function onCardSlotClicked(slotIndex: number) {
+        console.log('clicked on', slotIndex)
+        if (!selectedCard) return
+        facade.move(selectedCard.id, slotIndex)
+    }
+
+    function onCardClicked(card: CardModel, cardIndex: number) {
+        setSelectedCard(card.selected ? null : card)
+    }
 
     useEffect(() => {
-        setInPlacingMode(
-            playerCardCollection.findIndex((card) => card.selected) >= 0
-        )
-    }, [playerCardCollection])
-
-    function getEmptyCardRow(): CardPlaceholderModel[] {
-        const result: CardPlaceholderModel[] = []
-        for (let i = 0; i < cardRowWidth; i++)
-            result.push(new CardPlaceholderModel())
-        return result
-    }
-
-    function changeSelection(selected: boolean, key: number) {
-        setPlayerCardCollection(
-            playerCardCollection.map((card, index) => {
-                if (selected) card.selected = index == key
-                else card.selected = false
+        setPlayerCollection(
+            playerCollection.map((card) => {
+                card.selected = card === selectedCard
                 return card
             })
         )
-    }
+        setInPlacingMode(!!playerCollection.find((card) => card.selected))
+    }, [selectedCard])
 
-    function removeSelectedCard() {
-        setPlayerCardCollection(
-            playerCardCollection.filter((card, index) => !card.selected)
-        )
-    }
-
-    function onCardRowPlaceholderClicked(plaseholderIndex: number) {
-        console.log('clicked on', plaseholderIndex)
-        setPlayerCardRow(
-            playerCardRow.map((placeholder, index) => {
-                if (plaseholderIndex == index) {
-                    placeholder.card = new CardModel('placed card')
-                    return placeholder
-                }
-                return placeholder
+    useEffect(() => {
+        const moves = selectedCard ? facade.getAllowedMoves(selectedCard.id) : []
+        setPlayerSlots(
+            playerSlots.map((slot, index) => {
+                slot.highlighted = moves.includes(index)
+                return slot
             })
         )
-        setInPlacingMode(false)
-        removeSelectedCard()
-    }
+    }, [inPlacingMode])
 
     return (
         <div className='game-table'>
             <div className='table-card-area'>
+                <CardRow cardRow={enemySlots} ownedByPlayer={false} onSlotClicked={() => {}} />
                 <CardRow
-                    cardRow={enemyCardRow}
-                    ownedByPlayer={false}
-                    inPlaceMode={inPlacingMode}
-                    onCardPlaceholderClick={() => {}}
-                />
-                <CardRow
-                    cardRow={playerCardRow}
+                    cardRow={playerSlots}
                     ownedByPlayer={true}
-                    inPlaceMode={inPlacingMode}
-                    onCardPlaceholderClick={onCardRowPlaceholderClicked}
+                    onSlotClicked={onCardSlotClicked}
                 />
             </div>
             <PlayerCardCollection>
-                {playerCardCollection.map((card, index) => (
-                    <Card
-                        selected={card.selected}
-                        changeSelection={(selected) =>
-                            changeSelection(selected, index)
-                        }
+                {playerCollection.map((card, index) => (
+                    <CardView
+                        card={card}
                         key={index}
                         interactable={true}
-                        tempText={card.tempText}
-                        imageUrl={cardImageUrl}
+                        onClicked={() => onCardClicked(card, index)}
                     />
                 ))}
             </PlayerCardCollection>
-            <CardDeck>
-                <Card
-                    selected={false}
-                    interactable={false}
-                    tempText={'dummy'}
-                    imageUrl={cardImageUrl}
-                />
-                <Card
-                    selected={false}
-                    interactable={false}
-                    tempText={'dummy'}
-                    imageUrl={cardImageUrl}
-                />
-                <Card
-                    selected={false}
-                    interactable={false}
-                    tempText={'dummy'}
-                    imageUrl={cardImageUrl}
-                />
-                <Card
-                    selected={false}
-                    interactable={false}
-                    tempText={'dummy'}
-                    imageUrl={cardImageUrl}
-                />
-                <Card
-                    selected={false}
-                    interactable={false}
-                    tempText={'dummy'}
-                    imageUrl={cardImageUrl}
-                />
-            </CardDeck>
+            <CardDeck>{/* TODO: Add dummy cards */}</CardDeck>
         </div>
     )
 }
 
 function CardRow(props: {
-    cardRow: CardPlaceholderModel[]
+    cardRow: SlotModel[]
     ownedByPlayer: boolean
-    inPlaceMode: boolean
-    onCardPlaceholderClick: (index: number) => void
+    onSlotClicked: (index: number) => void
 }) {
     return (
         <div className='table-card-row'>
-            {props.cardRow.map((placeholder, index) => (
+            {props.cardRow.map((slot, index) => (
                 <CardPlaceholder
-                    model={placeholder}
-                    highlighted={props.ownedByPlayer && props.inPlaceMode}
-                    onClick={() => props.onCardPlaceholderClick(index)}
+                    key={index}
+                    model={slot}
+                    highlighted={props.ownedByPlayer && slot.highlighted}
+                    onClick={() => props.onSlotClicked(index)}
                 />
             ))}
         </div>
     )
 }
 
-function CardPlaceholder(props: {
-    model: CardPlaceholderModel
-    highlighted: boolean
-    onClick: () => void
-}) {
+function CardPlaceholder(props: { model: SlotModel; highlighted: boolean; onClick: () => void }) {
     const card = props.model.card
 
     return (
         <div
-            className={`table-card-placeholder${
-                props.highlighted ? ' highlighted' : ''
-            }`}
+            className={`table-card-placeholder${props.highlighted ? ' highlighted' : ''}`}
             onClick={props.onClick}
         >
-            {card && (
-                <Card
-                    tempText={card.tempText}
-                    imageUrl={cardImageUrl}
-                    interactable={false}
-                    selected={false}
-                />
-            )}
+            {card && <CardView card={card} interactable={false} />}
         </div>
     )
 }
@@ -218,18 +153,11 @@ function CardDeck(props: { children?: ReactNode }) {
     )
 }
 
-function Card(props: {
-    tempText: string
-    imageUrl: string
-    interactable: boolean
-    selected: boolean
-    changeSelection?: (selected: boolean) => void
-}) {
-    // const [selected, setSelected] = useState(false)
+function CardView(props: { card: CardModel; interactable: boolean; onClicked?: () => void }) {
     const [hovered, setHovered] = useState(false)
 
-    function onClick() {
-        props.changeSelection?.(!props.selected)
+    function onClicked() {
+        props.onClicked?.()
     }
 
     function onMouseEnter() {
@@ -242,29 +170,18 @@ function Card(props: {
 
     return (
         <div
-            className={`game-card ${props.selected ? 'selected' : ''} ${
+            className={`game-card ${props.card.selected ? 'selected' : ''} ${
                 hovered ? 'zoomed-in' : ''
             } ${props.interactable ? 'interactable' : ''}`}
-            onClick={onClick}
+            onClick={onClicked}
             onMouseEnter={onMouseEnter}
             onMouseLeave={onMouseLeave}
             style={{
-                backgroundImage: `url("${props.imageUrl}")`,
+                backgroundImage: `url("${props.card.imageUrl}")`
             }}
         >
-            {props.tempText}
+            {props.card.id.toString()}
         </div>
-    )
-}
-
-function DummyCard(props: { imageUrl: string }) {
-    return (
-        <div
-            className='game-card'
-            style={{
-                backgroundImage: `url("${props.imageUrl}")`,
-            }}
-        ></div>
     )
 }
 
@@ -273,10 +190,7 @@ function PlayerCardCollection(props: { children?: ReactNode[] }) {
         <div className={'table-player-card-collection-container'}>
             <div className='table-player-card-collection'>
                 {props.children?.map((child, index) => (
-                    <div
-                        key={index}
-                        style={{ marginRight: '10px', marginLeft: '10px' }}
-                    >
+                    <div key={index} style={{ marginRight: '10px', marginLeft: '10px' }}>
                         {child}
                     </div>
                 ))}
